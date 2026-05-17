@@ -13,7 +13,17 @@ Drop these four files into your repo root and you have the full stack:
 | `.oss-twin.yaml` | Private path list + mirror config oss-twin guards (edit for your project) |
 | `.github/workflows/security-scan.yml` | typos + gitleaks + trufflehog + osv-scanner in CI via the reusable workflow + a pre-commit job |
 
-## Setup (5 min)
+## Setup (one-liner)
+
+From the root of the public repo you want to wire up:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/creatornader/oss-security-scan/main/examples/full-stack-starter/setup.sh | bash
+```
+
+`setup.sh` copies the 4 starter files into your repo, prompts for your codenames + GitHub username + operator username, substitutes the placeholders, installs `pre-commit`, and activates the hooks. ~30 seconds. Files with remaining `REPLACE_ME` entries are listed at the end for you to edit manually.
+
+## Setup (manual, if you'd rather not pipe curl into bash)
 
 ```sh
 # 1. Copy the starter files into your repo root
