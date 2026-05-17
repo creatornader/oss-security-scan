@@ -1,0 +1,18 @@
+# Pre-commit hooks for the full-stack-starter wire-up.
+#
+# Install:   pip install pre-commit && pre-commit install
+# Run all:   pre-commit run --all-files
+#
+# leakguard catches narrative-leak prose. Codenames live in leakguard.yaml.
+# oss-twin-check verifies no private path leaks into the public tree.
+# Private paths live in .oss-twin.yaml.
+
+repos:
+  - repo: https://github.com/creatornader/leakguard
+    rev: v0.1.1
+    hooks:
+      - id: leakguard
+  - repo: https://github.com/creatornader/oss-twin
+    rev: v0.1.1
+    hooks:
+      - id: oss-twin-check

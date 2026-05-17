@@ -58,6 +58,19 @@ Two reasons documented inline in the workflow:
 
 - [`examples/minimal.yml`](examples/minimal.yml) — bare-minimum caller workflow (defaults for everything)
 - [`examples/full.yml`](examples/full.yml) — all inputs surfaced
+- [`examples/full-stack-starter/`](examples/full-stack-starter/) — copy-paste starter for the full 3-tool stack (oss-security-scan + leakguard + oss-twin together)
+
+## Full-stack wire-up
+
+oss-security-scan is one layer of a three-tool stack. For a new public OSS repo, the typical wire-up uses all three:
+
+| Tool | Concern | File(s) |
+|---|---|---|
+| [**leakguard**](https://github.com/creatornader/leakguard) | Narrative-leak detection (prose patterns, codenames) | `leakguard.yaml` (pin via `.pre-commit-config.yaml`) |
+| [**oss-twin**](https://github.com/creatornader/oss-twin) | Structural mirror gate (no private path in public tree) | `.oss-twin.yaml` (pin via `.pre-commit-config.yaml`) |
+| **oss-security-scan** (this tool) | typos + gitleaks + trufflehog + osv-scanner in CI | `.github/workflows/security-scan.yml` (calls this reusable workflow) |
+
+Copy [`examples/full-stack-starter/`](examples/full-stack-starter/) into a fresh repo, edit the codename list in `leakguard.yaml`, edit the private paths in `.oss-twin.yaml`, and you have the full stack wired in ~5 minutes.
 
 ## Versioning
 

@@ -1,0 +1,30 @@
+# oss-twin config for the full-stack-starter wire-up.
+#
+# Declares the relationship between this public repo and its private
+# mirror. `oss-twin check` walks private_paths and fails if any match
+# an existing path in the public tree (tracked files only).
+#
+# IMPORTANT: replace REPLACE_ME entries with your actual paths.
+
+version: 1
+
+mirror:
+  # Path to the private mirror, relative to this repo's root.
+  path: ../REPLACE_ME_REPO_NAME-internal
+  # Optional. If set, `oss-twin init --push` pushes to this remote.
+  # remote: git@github.com:REPLACE_ME_USERNAME/REPLACE_ME_REPO_NAME-internal.git
+  visibility: private
+
+# Paths that should NEVER exist in this public repo. Trailing `/` means
+# "directory and everything in it." Glob patterns work via fnmatch.
+private_paths:
+  - docs/handoffs/
+  - docs/internal/
+  - .remember/
+  - thoughts/
+
+# Directory structure to scaffold in the mirror on `oss-twin init`.
+# Used to seed an empty mirror with the right shape.
+mirror_scaffold:
+  - docs/
+  - docs/handoffs/

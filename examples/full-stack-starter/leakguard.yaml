@@ -1,0 +1,50 @@
+# Your project's leakguard config.
+#
+# Patterns here are ADDED to leakguard's starter catalog. The starter
+# catches generic leak classes (phase numbering, time-of-day narration,
+# agent memory IDs, etc.). This file adds the operator's specific
+# codenames + paths that shouldn't appear in this public repo.
+#
+# See https://github.com/creatornader/leakguard for the starter
+# catalog and the leak-class taxonomy.
+#
+# IMPORTANT: replace REPLACE_ME entries with your project's actual
+# codenames. Delete classes you don't need.
+
+version: 1
+
+# Files where the starter classes produce too many false positives to
+# be useful (technical English using "today" / "in this session" as
+# protocol terminology, config files that reference paths as values,
+# etc.). Add files here case-by-case after running `leakguard scan .`
+# once and reviewing the noise.
+ignore_paths:
+  - README.md
+  - .pre-commit-config.yaml
+  - .oss-twin.yaml
+  - leakguard.yaml
+  - .gitignore
+  - .github/workflows/security-scan.yml
+
+classes:
+  - id: cross-project-codenames
+    # Names of OTHER projects you maintain. If you maintain projects A,
+    # B, C and you're publishing A, list B and C here. Drop entries that
+    # don't apply to your operator surface.
+    patterns:
+      - '\bREPLACE_ME_OTHER_PROJECT_A\b'
+      - '\bREPLACE_ME_OTHER_PROJECT_B\b'
+
+  - id: operator-paths
+    # Your operator username (the one that appears in `/Users/<name>/`
+    # paths and GitHub URLs). Replace with your actual username.
+    patterns:
+      - '\bREPLACE_ME_OPERATOR_USERNAME\b'
+      - '/Users/REPLACE_ME_OPERATOR_USERNAME/'
+
+  - id: private-wrapper-services
+    # Internal wrapper services your public code interacts with but
+    # should not be named. Common pattern: an "X-bridge" or
+    # "X-internal-api" wrapper.
+    patterns: []
+      # - '\bREPLACE_ME_WRAPPER_SERVICE\b'
