@@ -1,0 +1,108 @@
+name: oss-security-scan
+
+# Reusable workflow: multi-tier security scanning for public OSS repos.
+#
+# All inputs that reach run: commands flow through env: vars first, per
+# GitHub's safe pattern:
+# https://github.blog/security/vulnerability-research/how-to-catch-github-actions-workflow-injections-before-attackers-do/
+# No github.event.* fields are used in run: blocks.
+#
+# Tier 1 (every push + PR):
+#   - typos:     spelling check across all tracked files
+#   - gitleaks:  pattern-based credential scanner (direct install for version control)
+#   - trufflehog: verified-secrets scanner with live API confirmation
+#
+# Tier 2 (caller passes run-osv-scanner: true; typically schedule-only):
+#   - OSV-Scanner: transitive-dep CVE check across the OSV database
+#
+# Usage: see README.md or examples/.
+
+on:
+  workflow_call:
+    inputs:
+      gitleaks-version:
+        description: 'gitleaks version to install'
+        type: string
+        default: '8.30.1'
+      gitleaks-config:
+        description: 'Path to gitleaks config (relative to repo root). If absent, gitleaks runs with built-in defaults.'
+        type: string
+        default: '.gitleaks.toml'
+      trufflehog-extra-args:
+        description: 'Extra args passed to trufflehog'
+        type: string
+        default: '--results=verified,unknown'
+      run-typos:
+        description: 'Run the typos spelling check'
+        type: boolean
+        default: true
+      run-gitleaks:
+        description: 'Run gitleaks'
+        type: boolean
+        default: true
+      run-trufflehog:
+        description: 'Run trufflehog'
+        type: boolean
+        default: true
+      run-osv-scanner:
+        description: 'Run OSV-Scanner (typically schedule-only)'
+        type: boolean
+        default: false
+
+jobs:
+  typos:
+    if: ${{ inputs.run-typos }}
+    name: typos (spelling check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Run typos
+        uses: crate-ci/typos@v1.46.1
+
+  gitleaks:
+    if: ${{ inputs.run-gitleaks }}
+    name: gitleaks (credential pattern scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks
+        env:
+          GITLEAKS_VERSION: ${{ inputs.gitleaks-version }}
+        run: |
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /tmp gitleaks
+          sudo mv /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+      - name: Run gitleaks
+        env:
+          GITLEAKS_CONFIG_PATH: ${{ github.workspace }}/${{ inputs.gitleaks-config }}
+        run: |
+          if [ -f "$GITLEAKS_CONFIG_PATH" ]; then
+            gitleaks git --no-banner -c "$GITLEAKS_CONFIG_PATH"
+          else
+            gitleaks git --no-banner
+          fi
+
+  trufflehog:
+    if: ${{ inputs.run-trufflehog }}
+    name: TruffleHog (verified-secrets scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          extra_args: ${{ inputs.trufflehog-extra-args }}
+
+  osv-scanner:
+    if: ${{ inputs.run-osv-scanner }}
+    name: OSV-Scanner (CVE scan)
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.8
+    permissions:
+      actions: read
+      security-events: write
+      contents: read
