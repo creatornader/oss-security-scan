@@ -1,0 +1,35 @@
+name: integration-test
+
+# End-to-end integration test for the full-stack-starter wire-up.
+# Runs tests/test-integration.sh against a fresh git repo to verify:
+#   - setup.sh produces the expected 4 files
+#   - Placeholders get substituted from piped stdin
+#   - leakguard + oss-twin both work on the bootstrapped repo
+#
+# All run: blocks use no github.event.* inputs.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: full-stack-starter integration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Configure git identity
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "CI"
+          git config --global init.defaultBranch main
+      - name: Run integration test
+        run: bash examples/full-stack-starter/tests/test-integration.sh
