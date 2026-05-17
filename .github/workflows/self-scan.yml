@@ -16,6 +16,7 @@ on:
     branches: [main]
   schedule:
     - cron: '0 9 * * 0'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -26,4 +27,4 @@ jobs:
   scan:
     uses: ./.github/workflows/oss-security-scan.yml
     with:
-      run-osv-scanner: ${{ github.event_name == 'schedule' }}
+      run-osv-scanner: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
