@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup.sh — wire leakguard + oss-twin + oss-security-scan into a public OSS repo.
+# setup.sh: wire leakguard + oss-twin + oss-security-scan into a public OSS repo.
 #
 # Run from inside the public repo you want to wire up:
 #   curl -fsSL https://raw.githubusercontent.com/creatornader/oss-security-scan/main/examples/full-stack-starter/setup.sh | bash
