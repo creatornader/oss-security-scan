@@ -1,0 +1,29 @@
+name: self-scan
+
+# oss-security-scan eats its own dogfood: this workflow calls the
+# reusable workflow defined in this same repo against itself. Catches
+# regressions if changes to oss-security-scan.yml break the workflow's
+# own contract.
+#
+# Different filename from oss-security-scan.yml so the reusable
+# workflow (with workflow_call:) and this caller (with push: + PR:)
+# coexist in the same repo without naming conflict.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 9 * * 0'
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  scan:
+    uses: ./.github/workflows/oss-security-scan.yml
+    with:
+      run-osv-scanner: ${{ github.event_name == 'schedule' }}
