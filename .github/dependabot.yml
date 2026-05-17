@@ -1,0 +1,21 @@
+# Dependabot config for oss-security-scan.
+#
+# Tracks one ecosystem only:
+# 1. github-actions — weekly grouped PR for action version drift.
+#
+# This is THE reusable workflow that the whole stack consumes. The
+# embedded versions (gitleaks, trufflehog, osv-scanner, typos) are
+# pinned via 'with:' inputs in the workflow, not via package-ecosystem;
+# downstream callers set them per-repo.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
