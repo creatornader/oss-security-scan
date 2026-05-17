@@ -2,7 +2,7 @@
 
 Reusable GitHub Actions workflow that runs **typos + gitleaks + trufflehog + osv-scanner** against a public OSS repo. One `uses:` line in your repo replaces ~100 lines of inline workflow.
 
-Pairs with [`leakguard`](https://github.com/creatornader/leakguard) (narrative-leak detection) and [`oss-twin`](https://github.com/creatornader/oss-twin) (public/private mirror plumbing). All three are slot-fillers in the public OSS prep stack: oss-security-scan owns credentials + CVEs + spelling; leakguard owns narrative content; oss-twin owns structural separation between public + private repos.
+Pairs with [`textleaks`](https://github.com/creatornader/textleaks) (narrative-leak detection) and [`oss-twin`](https://github.com/creatornader/oss-twin) (public/private mirror plumbing). All three are slot-fillers in the public OSS prep stack: oss-security-scan owns credentials + CVEs + spelling; textleaks owns narrative content; oss-twin owns structural separation between public + private repos.
 
 ## Use
 
@@ -58,7 +58,7 @@ Two reasons documented inline in the workflow:
 
 - [`examples/minimal.yml`](examples/minimal.yml): bare-minimum caller workflow (defaults for everything)
 - [`examples/full.yml`](examples/full.yml): all inputs surfaced
-- [`examples/full-stack-starter/`](examples/full-stack-starter/): copy-paste starter for the full 3-tool stack (oss-security-scan + leakguard + oss-twin together)
+- [`examples/full-stack-starter/`](examples/full-stack-starter/): copy-paste starter for the full 3-tool stack (oss-security-scan + textleaks + oss-twin together)
 
 ## Full-stack wire-up
 
@@ -66,11 +66,11 @@ oss-security-scan is one layer of a three-tool stack. For a new public OSS repo,
 
 | Tool | Concern | File(s) |
 |---|---|---|
-| [**leakguard**](https://github.com/creatornader/leakguard) | Narrative-leak detection (prose patterns, codenames) | `leakguard.yaml` (pin via `.pre-commit-config.yaml`) |
+| [**textleaks**](https://github.com/creatornader/textleaks) | Narrative-leak detection (prose patterns, codenames) | `textleaks.yaml` (pin via `.pre-commit-config.yaml`) |
 | [**oss-twin**](https://github.com/creatornader/oss-twin) | Structural mirror gate (no private path in public tree) | `.oss-twin.yaml` (pin via `.pre-commit-config.yaml`) |
 | **oss-security-scan** (this tool) | typos + gitleaks + trufflehog + osv-scanner in CI | `.github/workflows/security-scan.yml` (calls this reusable workflow) |
 
-Copy [`examples/full-stack-starter/`](examples/full-stack-starter/) into a fresh repo, edit the codename list in `leakguard.yaml`, edit the private paths in `.oss-twin.yaml`, and you have the full stack wired in ~5 minutes.
+Copy [`examples/full-stack-starter/`](examples/full-stack-starter/) into a fresh repo, edit the codename list in `textleaks.yaml`, edit the private paths in `.oss-twin.yaml`, and you have the full stack wired in ~5 minutes.
 
 ## Versioning
 
@@ -81,7 +81,7 @@ Tags are SemVer. Pin to a major (`@v0.1.0` until v1, then `@v1`) for stability. 
 v0.1.0 is the initial extraction from a production workflow that has been running across multiple repos. Planned:
 
 - **v0.2**: optional Vale prose lint job
-- **v0.2**: optional [leakguard](https://github.com/creatornader/leakguard) job (narrative-leak detection)
+- **v0.2**: optional [textleaks](https://github.com/creatornader/textleaks) job (narrative-leak detection)
 - **v0.2**: matrix support for multi-OS gitleaks (windows/macOS runners for cross-platform projects)
 
 ## License

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# setup.sh: wire leakguard + oss-twin + oss-security-scan into a public OSS repo.
+# setup.sh: wire textleaks + oss-twin + oss-security-scan into a public OSS repo.
 #
 # Run from inside the public repo you want to wire up:
 #   curl -fsSL https://raw.githubusercontent.com/creatornader/oss-security-scan/main/examples/full-stack-starter/setup.sh | bash
@@ -71,7 +71,7 @@ copy_file() {
 
 echo "step 1/4: copying starter files"
 copy_file ".pre-commit-config.yaml" ".pre-commit-config.yaml"
-copy_file "leakguard.yaml" "leakguard.yaml"
+copy_file "textleaks.yaml" "textleaks.yaml"
 copy_file ".oss-twin.yaml" ".oss-twin.yaml"
 copy_file ".github/workflows/security-scan.yml" ".github/workflows/security-scan.yml"
 echo
@@ -99,15 +99,15 @@ substitute() {
   fi
 }
 
-substitute "leakguard.yaml" "REPLACE_ME_OPERATOR_USERNAME" "${OP_USER:-REPLACE_ME_OPERATOR_USERNAME}"
-substitute "leakguard.yaml" "REPLACE_ME_OTHER_PROJECT_A" "${CN1:-REPLACE_ME_OTHER_PROJECT_A}"
-substitute "leakguard.yaml" "REPLACE_ME_OTHER_PROJECT_B" "${CN2:-REPLACE_ME_OTHER_PROJECT_B}"
+substitute "textleaks.yaml" "REPLACE_ME_OPERATOR_USERNAME" "${OP_USER:-REPLACE_ME_OPERATOR_USERNAME}"
+substitute "textleaks.yaml" "REPLACE_ME_OTHER_PROJECT_A" "${CN1:-REPLACE_ME_OTHER_PROJECT_A}"
+substitute "textleaks.yaml" "REPLACE_ME_OTHER_PROJECT_B" "${CN2:-REPLACE_ME_OTHER_PROJECT_B}"
 substitute ".oss-twin.yaml" "REPLACE_ME_REPO_NAME" "$REPO_NAME"
 substitute ".oss-twin.yaml" "REPLACE_ME_USERNAME" "${GH_USER:-REPLACE_ME_USERNAME}"
 
-echo "  substituted placeholders in leakguard.yaml + .oss-twin.yaml"
+echo "  substituted placeholders in textleaks.yaml + .oss-twin.yaml"
 echo "  remaining REPLACE_ME entries (review + edit manually):"
-grep -l REPLACE_ME .pre-commit-config.yaml leakguard.yaml .oss-twin.yaml .github/workflows/security-scan.yml 2>/dev/null | sed 's/^/    /' || echo "    none"
+grep -l REPLACE_ME .pre-commit-config.yaml textleaks.yaml .oss-twin.yaml .github/workflows/security-scan.yml 2>/dev/null | sed 's/^/    /' || echo "    none"
 echo
 
 # ── Install pre-commit ────────────────────────────────────────────────
@@ -146,7 +146,7 @@ cat <<'EOF'
 setup complete.
 
 next steps:
-  1. Review the 4 new files (.pre-commit-config.yaml, leakguard.yaml,
+  1. Review the 4 new files (.pre-commit-config.yaml, textleaks.yaml,
      .oss-twin.yaml, .github/workflows/security-scan.yml)
   2. Replace any remaining REPLACE_ME entries with project-specific values
   3. Optionally scaffold the private mirror:
@@ -154,7 +154,7 @@ next steps:
        oss-twin init
   4. Commit when satisfied:
        git add -A
-       git commit -m "chore: wire in leakguard + oss-twin + oss-security-scan"
+       git commit -m "chore: wire in textleaks + oss-twin + oss-security-scan"
 
 docs: https://github.com/creatornader/oss-security-scan/tree/main/examples/full-stack-starter
 EOF

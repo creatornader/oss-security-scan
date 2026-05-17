@@ -1,11 +1,11 @@
-# Your project's leakguard config.
+# Your project's textleaks config.
 #
-# Patterns here are ADDED to leakguard's starter catalog. The starter
+# Patterns here are ADDED to textleaks's starter catalog. The starter
 # catches generic leak classes (phase numbering, time-of-day narration,
 # agent memory IDs, etc.). This file adds the operator's specific
 # codenames + paths that shouldn't appear in this public repo.
 #
-# See https://github.com/creatornader/leakguard for the starter
+# See https://github.com/creatornader/textleaks for the starter
 # catalog and the leak-class taxonomy.
 #
 # IMPORTANT: replace REPLACE_ME entries with your project's actual
@@ -16,13 +16,13 @@ version: 1
 # Files where the starter classes produce too many false positives to
 # be useful (technical English using "today" / "in this session" as
 # protocol terminology, config files that reference paths as values,
-# etc.). Add files here case-by-case after running `leakguard scan .`
+# etc.). Add files here case-by-case after running `textleaks scan .`
 # once and reviewing the noise.
 ignore_paths:
   - README.md
   - .pre-commit-config.yaml
   - .oss-twin.yaml
-  - leakguard.yaml
+  - textleaks.yaml
   - .gitignore
   - .github/workflows/security-scan.yml
 

@@ -4,7 +4,7 @@ name: integration-test
 # Runs tests/test-integration.sh against a fresh git repo to verify:
 #   - setup.sh produces the expected 4 files
 #   - Placeholders get substituted from piped stdin
-#   - leakguard + oss-twin both work on the bootstrapped repo
+#   - textleaks + oss-twin both work on the bootstrapped repo
 #
 # All run: blocks use no github.event.* inputs.
 
