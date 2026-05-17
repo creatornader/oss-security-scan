@@ -56,9 +56,9 @@ Two reasons documented inline in the workflow:
 
 ## Examples
 
-- [`examples/minimal.yml`](examples/minimal.yml) — bare-minimum caller workflow (defaults for everything)
-- [`examples/full.yml`](examples/full.yml) — all inputs surfaced
-- [`examples/full-stack-starter/`](examples/full-stack-starter/) — copy-paste starter for the full 3-tool stack (oss-security-scan + leakguard + oss-twin together)
+- [`examples/minimal.yml`](examples/minimal.yml): bare-minimum caller workflow (defaults for everything)
+- [`examples/full.yml`](examples/full.yml): all inputs surfaced
+- [`examples/full-stack-starter/`](examples/full-stack-starter/): copy-paste starter for the full 3-tool stack (oss-security-scan + leakguard + oss-twin together)
 
 ## Full-stack wire-up
 

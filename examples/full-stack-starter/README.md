@@ -54,7 +54,7 @@ For an existing repo with operator-private prose that the new gates flag, see th
 
 ## Substrate-skip pattern (for repos with existing prose linters)
 
-`leakguard.yaml` and `.oss-twin.yaml` BOTH contain codename + path strings as scanner config — defining what to catch, not mentioning the projects in narrative prose. If your repo already runs a prose linter (Vale, an LLM-based audit, your own regex grep), that linter will flag the strings in these config files as if they were narrative leaks. Exempt the two files at the linter level:
+`leakguard.yaml` and `.oss-twin.yaml` BOTH contain codename + path strings as scanner config: they define what to catch, not what to mention. If your repo already runs a prose linter (Vale, an LLM-based audit, your own regex grep), that linter will flag the strings in these config files as if they were narrative leaks. Exempt the two files at the linter level:
 
 - **Vale**: in `.vale.ini`, add `[leakguard.yaml] BasedOnStyles =` and same for `.oss-twin.yaml`
 - **LLM-based audit**: add `leakguard.yaml` and `.oss-twin.yaml` to your input-skip list
@@ -64,13 +64,13 @@ If your repo doesn't already have a prose linter, you can skip this section.
 
 ## After wire-up
 
-- **Commit + push to a new branch** — the local hooks fire on every commit; CI runs all 4 scanners + the pre-commit job on PRs
+- **Commit + push to a new branch**: the local hooks fire on every commit, and CI runs all 4 scanners + the pre-commit job on PRs
 - **Mark a file private retroactively**: `oss-twin move docs/handoffs/internal.md` (moves to mirror, removes from public)
 - **Update codename list**: edit `leakguard.yaml`, commit; the new patterns catch from the next commit forward
 - **Verify clean**: `leakguard scan` and `oss-twin check` both exit 0
 
 ## What's NOT in this starter
 
-- `.gitleaks.toml` — gitleaks config. If your repo has test fixtures that look like credentials (pinned public keys, dummy tokens), add allowlist entries
-- `_typos.toml` — typos config for project-specific spellings. Optional
-- Operator-private prose-lint substrate — out of scope; live separately in a mirror repo
+- `.gitleaks.toml`: gitleaks config. If your repo has test fixtures that look like credentials (pinned public keys, dummy tokens), add allowlist entries
+- `_typos.toml`: typos config for project-specific spellings. Optional
+- Operator-private prose-lint substrate: out of scope; lives separately in a mirror repo
