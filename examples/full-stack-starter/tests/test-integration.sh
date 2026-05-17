@@ -91,9 +91,11 @@ assert_absent ".oss-twin.yaml" "REPLACE_ME_USERNAME"
 # ─────────────────────────────────────────────────────────────────────
 echo "[5/5] running leakguard scan + oss-twin check"
 
-# Install the two tools (CI environment expected to have pip)
-pip install -q leakguard 2>/dev/null || pip install -q "git+https://github.com/creatornader/leakguard.git@v0.1.1"
-pip install -q oss-twin 2>/dev/null || pip install -q "git+https://github.com/creatornader/oss-twin.git@v0.1.1"
+# Install the two tools directly from git. PyPI has unrelated packages
+# under the names "leakguard" and "oss-twin" — installing from there would
+# give us the wrong CLI, so we always pin to the GitHub release tag.
+pip install -q "git+https://github.com/creatornader/leakguard.git@v0.1.1"
+pip install -q "git+https://github.com/creatornader/oss-twin.git@v0.1.1"
 
 git add -A
 git commit -q -m "wire-up"
