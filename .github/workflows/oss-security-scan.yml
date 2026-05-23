@@ -54,8 +54,21 @@ jobs:
     if: ${{ inputs.run-typos }}
     name: typos (spelling check)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      # Explicit token + persist-credentials=false hardens checkout against
+      # the transient GitHub-side auth flake observed 2026-05-23 in
+      # creatornader/atrib post-merge run 26325615820: three internal
+      # retries failed with "could not read Username for
+      # 'https://github.com': terminal prompts disabled" on the default
+      # credential-discovery path. Forcing github.token + skipping
+      # persistence routes around the discovery path that flaked, and
+      # typos itself needs no later git auth (it reads the working tree).
       - uses: actions/checkout@v6
+        with:
+          token: ${{ github.token }}
+          persist-credentials: false
       - name: Run typos
         uses: crate-ci/typos@v1.46.2
 
@@ -63,9 +76,12 @@ jobs:
     if: ${{ inputs.run-gitleaks }}
     name: gitleaks (credential pattern scan)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
+          token: ${{ github.token }}
           fetch-depth: 0
       - name: Install gitleaks
         env:
@@ -89,9 +105,12 @@ jobs:
     if: ${{ inputs.run-trufflehog }}
     name: TruffleHog (verified-secrets scan)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
+          token: ${{ github.token }}
           fetch-depth: 0
       - uses: trufflesecurity/trufflehog@main
         with:
