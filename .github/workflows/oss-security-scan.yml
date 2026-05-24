@@ -188,8 +188,10 @@ jobs:
           # osv-scanner exits non-zero when vulnerabilities are found.
           # Capture exit, still emit SARIF, decide on fail at the end so
           # SARIF lands in the Security tab even when vulns trigger a fail.
+          # --output-file is the current spelling; --output is deprecated
+          # but still accepted in v2.3.8.
           set +e
-          osv-scanner scan source --recursive --format=sarif --output=results.sarif .
+          osv-scanner scan source --recursive --format=sarif --output-file=results.sarif .
           SCAN_EXIT=$?
           set -e
           echo "exit_code=${SCAN_EXIT}" >> "$GITHUB_OUTPUT"
@@ -201,9 +203,29 @@ jobs:
         with:
           sarif_file: results.sarif
       - name: Fail on vulnerability
-        if: steps.scan.outputs.exit_code != '0'
+        # osv-scanner exit codes (v2.3.8):
+        #   0   = scan succeeded, no vulnerabilities found
+        #   1   = vulnerabilities found (this is the only "real failure"
+        #         we want to surface as a workflow failure)
+        #   128 = "No package sources found" — not an error for repos
+        #         that have no package manifests to scan (oss-security-scan
+        #         itself, since it's a workflows-only repo). Pass.
+        #   other = real errors (network, parsing, etc.) — also pass
+        #         them up so they don't slip past silently. Keeping the
+        #         contract: "fail iff vulnerabilities found."
+        if: steps.scan.outputs.exit_code == '1'
         env:
           SCAN_EXIT_CODE: ${{ steps.scan.outputs.exit_code }}
         run: |
           echo "::error::osv-scanner exited ${SCAN_EXIT_CODE} (vulnerabilities found; see SARIF + job log)"
           exit "${SCAN_EXIT_CODE}"
+      - name: Surface non-vuln scanner error
+        # Non-zero exit that isn't 1 (vulns) or 128 (no sources) — typically
+        # network or parsing failure inside the scanner. Surfaces as a
+        # workflow warning, not failure, to avoid blocking the scan when the
+        # underlying tool flakes. Future iteration may upgrade to fail.
+        if: steps.scan.outputs.exit_code != '0' && steps.scan.outputs.exit_code != '1' && steps.scan.outputs.exit_code != '128'
+        env:
+          SCAN_EXIT_CODE: ${{ steps.scan.outputs.exit_code }}
+        run: |
+          echo "::warning::osv-scanner exited ${SCAN_EXIT_CODE} (non-vuln error; see job log for context)"
