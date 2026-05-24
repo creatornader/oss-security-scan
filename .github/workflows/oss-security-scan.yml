@@ -120,8 +120,90 @@ jobs:
   osv-scanner:
     if: ${{ inputs.run-osv-scanner }}
     name: OSV-Scanner (CVE scan)
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.8
+    # Inline rather than calling google/osv-scanner-action/.github/workflows/
+    # osv-scanner-reusable.yml so we control the Go toolchain. The upstream
+    # reusable workflow runs the scanner inside a Docker image that bundles
+    # Go 1.26.2 with GOTOOLCHAIN=local hardcoded. Any caller whose go.mod
+    # requires a newer Go (e.g. atrib-log-pp-cli ran into this on 2026-05-24
+    # with go 1.26.3 after the dep group bump) hits a govulncheck "loading
+    # packages: go.mod requires go >= X" error. Installing osv-scanner on
+    # the runner host with GOTOOLCHAIN=auto lets govulncheck transparently
+    # fetch whatever toolchain go.mod asks for.
+    #
+    # Safety: no github.event.* values reach run: blocks. Step outputs are
+    # read only inside if: expressions (boolean only) or via the env: ->
+    # "$VAR" pattern, never interpolated directly into shell.
+    runs-on: ubuntu-latest
     permissions:
       actions: read
       security-events: write
       contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ github.token }}
+          persist-credentials: false
+      # Conditional setup-go: go-version-file: 'go.mod' errors hard if go.mod
+      # is absent, so non-Go callers (atrib, note-to-self) get the stable
+      # branch which just installs Go for the osv-scanner CLI install step.
+      # Go repos get whatever go.mod requires so govulncheck has the right
+      # toolchain to load their packages without a version mismatch.
+      - name: Detect go.mod
+        id: gomod
+        run: |
+          if [ -f go.mod ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Set up Go from go.mod (Go callers)
+        if: steps.gomod.outputs.present == 'true'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+      - name: Set up Go (stable; non-Go callers)
+        if: steps.gomod.outputs.present == 'false'
+        uses: actions/setup-go@v6
+        with:
+          go-version: 'stable'
+      - name: Install osv-scanner CLI
+        env:
+          GOTOOLCHAIN: auto
+        run: |
+          # Pinned to match what the previous reusable-workflow call used.
+          # Bump alongside any oss-security-scan release that wants a newer
+          # scanner; CI here is the verification path.
+          go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.3.8
+          osv-scanner --version
+      - name: Run osv-scanner (SARIF for upload + summary on fail)
+        id: scan
+        env:
+          # auto = if the caller's go.mod (or a transitive go.mod) requires
+          # a newer Go than what setup-go installed, download it on demand.
+          # This is the entire reason we inlined the scan: the upstream
+          # container had GOTOOLCHAIN=local which blocks this fetch.
+          GOTOOLCHAIN: auto
+        run: |
+          # osv-scanner exits non-zero when vulnerabilities are found.
+          # Capture exit, still emit SARIF, decide on fail at the end so
+          # SARIF lands in the Security tab even when vulns trigger a fail.
+          set +e
+          osv-scanner scan source --recursive --format=sarif --output=results.sarif .
+          SCAN_EXIT=$?
+          set -e
+          echo "exit_code=${SCAN_EXIT}" >> "$GITHUB_OUTPUT"
+          # Human-readable summary alongside the SARIF artifact.
+          osv-scanner scan source --recursive . || true
+      - name: Upload SARIF to Security tab
+        if: always() && hashFiles('results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
+      - name: Fail on vulnerability
+        if: steps.scan.outputs.exit_code != '0'
+        env:
+          SCAN_EXIT_CODE: ${{ steps.scan.outputs.exit_code }}
+        run: |
+          echo "::error::osv-scanner exited ${SCAN_EXIT_CODE} (vulnerabilities found; see SARIF + job log)"
+          exit "${SCAN_EXIT_CODE}"

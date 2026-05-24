@@ -45,7 +45,12 @@ That's it. The reusable workflow runs the four tools in parallel jobs.
 | `run-gitleaks` | boolean | `true` | Run gitleaks |
 | `run-trufflehog` | boolean | `true` | Run trufflehog |
 | `run-osv-scanner` | boolean | `false` | Run OSV-Scanner (set to schedule-only for cost) |
-| `osv-scanner-version` | string | `v2.3.8` | google/osv-scanner-action version tag |
+
+## Why direct osv-scanner install instead of `google/osv-scanner-action`
+
+The upstream `google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.8` runs the scan inside a Docker image (`ghcr.io/google/osv-scanner-action:v2.3.8`) that bundles Go 1.26.2 with `GOTOOLCHAIN=local` hardcoded. Any caller whose `go.mod` requires a Go version newer than 1.26.2 hits a `govulncheck: loading packages: err: go: go.mod requires go >= X (running go 1.26.2; GOTOOLCHAIN=local)` error and the scan fails before producing meaningful output (observed in atrib-log-pp-cli on 2026-05-24 after a dep-group bump forced `go 1.26.3`).
+
+Inlining the scanner — `actions/setup-go` from the caller's `go.mod` (or `stable` when none exists), then `go install github.com/google/osv-scanner/v2/cmd/osv-scanner@<pinned>` with `GOTOOLCHAIN=auto` — solves it: govulncheck can transparently fetch whatever toolchain the caller requires. Trade-offs: we lose the upstream container's preinstalled binary (adds ~20s setup time per scheduled run) and the call-style is now a job composition instead of a single `uses:`. Both are acceptable for the ability to scan repos that are ahead of the upstream container's bundled Go.
 
 ## Why direct gitleaks install instead of `gitleaks-action@v2`
 

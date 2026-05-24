@@ -25,4 +25,3 @@ jobs:
       run-gitleaks: true
       run-trufflehog: true
       run-osv-scanner: ${{ github.event_name == 'schedule' }}
-      osv-scanner-version: 'v2.3.8'
