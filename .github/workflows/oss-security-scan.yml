@@ -70,7 +70,7 @@ jobs:
           token: ${{ github.token }}
           persist-credentials: false
       - name: Run typos
-        uses: crate-ci/typos@v1.46.3
+        uses: crate-ci/typos@v1.47.0
 
   gitleaks:
     if: ${{ inputs.run-gitleaks }}
