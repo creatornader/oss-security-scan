@@ -65,12 +65,12 @@ jobs:
       # credential-discovery path. Forcing github.token + skipping
       # persistence routes around the discovery path that flaked, and
       # typos itself needs no later git auth (it reads the working tree).
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ github.token }}
           persist-credentials: false
       - name: Run typos
-        uses: crate-ci/typos@v1.46.3
+        uses: crate-ci/typos@v1.47.2
 
   gitleaks:
     if: ${{ inputs.run-gitleaks }}
@@ -79,7 +79,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ github.token }}
           fetch-depth: 0
@@ -108,7 +108,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ github.token }}
           fetch-depth: 0
@@ -139,7 +139,7 @@ jobs:
       security-events: write
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           token: ${{ github.token }}
           persist-credentials: false
