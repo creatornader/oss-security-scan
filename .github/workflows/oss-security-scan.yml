@@ -138,8 +138,6 @@ jobs:
       actions: read
       security-events: write
       contents: read
-    outputs:
-      exit_code: ${{ steps.scan.outputs.exit_code }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -188,8 +186,10 @@ jobs:
           GOTOOLCHAIN: auto
         run: |
           # osv-scanner exits non-zero when vulnerabilities are found.
-          # Capture exit and still emit SARIF. The osv-scanner-verdict job fails
-          # on vulns, so SARIF lands in the Security tab and this job stays green.
+          # Capture exit and still emit SARIF. This workflow never fails on
+          # vulns: GitHub marks the code scanning setup as failing whenever the
+          # run that uploaded the SARIF fails. The exit code is saved as an
+          # artifact for osv-gate.yml, which fails in a separate run instead.
           # --output-file is the current spelling; --output is deprecated
           # but still accepted in v2.3.8.
           set +e
@@ -204,6 +204,20 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif
+      - name: Save scan result for osv-gate
+        if: always() && steps.scan.outputs.exit_code != ''
+        env:
+          SCAN_EXIT_CODE: ${{ steps.scan.outputs.exit_code }}
+        run: |
+          mkdir -p osv-result
+          printf '%s\n' "${SCAN_EXIT_CODE}" > osv-result/exit_code
+      - name: Upload scan result for osv-gate
+        if: always() && steps.scan.outputs.exit_code != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: osv-scanner-result
+          path: osv-result/exit_code
+          retention-days: 7
       - name: Surface non-vuln scanner error
         # Non-zero exit that isn't 1 (vulns) or 128 (no sources) — typically
         # network or parsing failure inside the scanner. Surfaces as a
@@ -215,34 +229,3 @@ jobs:
         run: |
           echo "::warning::osv-scanner exited ${SCAN_EXIT_CODE} (non-vuln error; see job log for context)"
 
-  osv-scanner-verdict:
-    # Separate from the osv-scanner job on purpose. GitHub's code scanning
-    # tool status reports "Last run failed" whenever the job that uploaded
-    # the SARIF fails, and shows a "configuration error" banner on the repo.
-    # Failing here instead keeps the upload job green while CI still goes
-    # red when vulnerabilities are found.
-    if: ${{ inputs.run-osv-scanner && needs.osv-scanner.result == 'success' }}
-    needs: osv-scanner
-    name: OSV-Scanner (vulnerability gate)
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Fail on vulnerability
-        # osv-scanner exit codes (v2.3.8):
-        #   0   = scan succeeded, no vulnerabilities found
-        #   1   = vulnerabilities found (this is the only "real failure"
-        #         we want to surface as a workflow failure)
-        #   128 = "No package sources found" — not an error for repos
-        #         that have no package manifests to scan (oss-security-scan
-        #         itself, since it's a workflows-only repo). Pass.
-        #   other = real errors (network, parsing, etc.) — surfaced as a
-        #         warning by the osv-scanner job. Keeping the contract:
-        #         "fail iff vulnerabilities found."
-        env:
-          SCAN_EXIT_CODE: ${{ needs.osv-scanner.outputs.exit_code }}
-        run: |
-          if [ "${SCAN_EXIT_CODE}" = "1" ]; then
-            echo "::error::osv-scanner exited ${SCAN_EXIT_CODE} (vulnerabilities found; see SARIF in the Security tab + the osv-scanner job log)"
-            exit 1
-          fi
-          echo "osv-scanner exited ${SCAN_EXIT_CODE}; no vulnerabilities to fail on."

@@ -33,6 +33,31 @@ jobs:
 
 That's it. The reusable workflow runs the four tools in parallel jobs.
 
+## Failing CI on OSV findings
+
+The scan workflow never fails because OSV-Scanner found vulnerabilities. GitHub marks a code scanning setup as failing ("Code scanning configuration error") whenever the workflow run that uploaded the SARIF fails, even when the uploading job itself succeeded. So the findings land in the Security tab from a green run, and a second workflow turns them into a red run:
+
+```yaml
+# .github/workflows/osv-gate.yml in your repo
+name: osv-gate
+on:
+  workflow_run:
+    workflows: [security-scan]   # name of your scan workflow
+    types: [completed]
+
+permissions:
+  actions: read
+
+jobs:
+  gate:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    uses: creatornader/oss-security-scan/.github/workflows/osv-gate.yml@v0.3.0
+    with:
+      run-id: ${{ github.event.workflow_run.id }}
+```
+
+The scan saves OSV-Scanner's exit code as an `osv-scanner-result` artifact. The gate downloads it and fails only on exit code 1 (vulnerabilities found). Runs without OSV (pushes and PRs by default) pass. `workflow_run` only fires for workflow files on the default branch.
+
 ## Inputs
 
 | Input | Type | Default | Description |
@@ -63,6 +88,7 @@ Two reasons documented inline in the workflow:
 
 - [`examples/minimal.yml`](examples/minimal.yml): bare-minimum caller workflow (defaults for everything)
 - [`examples/full.yml`](examples/full.yml): all inputs surfaced
+- [`examples/osv-gate.yml`](examples/osv-gate.yml): separate run that fails CI on OSV findings
 - [`examples/full-stack-starter/`](examples/full-stack-starter/): copy-paste starter for the full 3-tool stack (oss-security-scan + textleaks + oss-twin together)
 
 ## Full-stack wire-up
