@@ -1,0 +1,70 @@
+name: osv-gate
+
+# Reusable workflow: fails when the OSV-Scanner run in oss-security-scan.yml
+# found vulnerabilities.
+#
+# Why a separate run: GitHub's code scanning tool status marks a SARIF setup
+# as failing ("Code scanning configuration error") whenever the workflow run
+# that uploaded the SARIF fails, even if the uploading job succeeded. So the
+# scan run always succeeds and this gate fails in its own run, which uploads
+# nothing to code scanning.
+#
+# Caller pattern (see examples/osv-gate.yml):
+#
+#   on:
+#     workflow_run:
+#       workflows: [security-scan]   # the caller's scan workflow name
+#       types: [completed]
+#   jobs:
+#     gate:
+#       uses: creatornader/oss-security-scan/.github/workflows/osv-gate.yml@vX
+#       with:
+#         run-id: ${{ github.event.workflow_run.id }}
+#
+# Safety: the artifact only carries an integer exit code. It is compared as a
+# string and never executed or interpolated into shell. Runs without an
+# osv-scanner-result artifact (pushes and PRs, where OSV is off) pass.
+
+on:
+  workflow_call:
+    inputs:
+      run-id:
+        description: 'ID of the completed oss-security-scan run to check'
+        type: string
+        required: true
+
+jobs:
+  osv-gate:
+    name: OSV-Scanner (vulnerability gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+    steps:
+      - name: Download scan result
+        id: download
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: osv-scanner-result
+          path: osv-result
+          run-id: ${{ inputs.run-id }}
+          github-token: ${{ github.token }}
+      - name: Fail on vulnerability
+        # osv-scanner exit codes (v2.3.8):
+        #   1   = vulnerabilities found: fail.
+        #   0   = clean; 128 = no package sources; other = scanner error
+        #         (already a warning in the scan run): pass.
+        env:
+          DOWNLOAD_OUTCOME: ${{ steps.download.outcome }}
+        run: |
+          if [ "${DOWNLOAD_OUTCOME}" != "success" ] || [ ! -f osv-result/exit_code ]; then
+            echo "No osv-scanner-result artifact in this run (OSV-Scanner did not run). Nothing to gate."
+            exit 0
+          fi
+          code="$(head -c 8 osv-result/exit_code | tr -dc '0-9')"
+          if [ "${code}" = "1" ]; then
+            echo "::error::osv-scanner found vulnerabilities in the scan run. See the code scanning alerts in the Security tab."
+            exit 1
+          fi
+          echo "osv-scanner exited ${code:-unknown}; no vulnerabilities to fail on."
